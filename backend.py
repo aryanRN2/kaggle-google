@@ -58,6 +58,28 @@ async def read_file(filename: str = Query(..., description="Relative path of fil
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/files/delete")
+async def delete_file(filename: str = Query(..., description="Relative path of file inside sandbox")):
+    """Deletes a file or directory inside the sandbox folder."""
+    clean_path = filename.lstrip("/")
+    target_path = os.path.abspath(os.path.join(SANDBOX_DIR, clean_path))
+    
+    if not target_path.startswith(SANDBOX_DIR):
+        raise HTTPException(status_code=400, detail="Path traversal detected.")
+        
+    if not os.path.exists(target_path):
+        raise HTTPException(status_code=404, detail="File not found.")
+        
+    try:
+        if os.path.isdir(target_path):
+            import shutil
+            shutil.rmtree(target_path)
+        else:
+            os.remove(target_path)
+        return {"filename": filename, "status": "deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/chat")
 async def chat_stream(prompt: str = Query(..., description="Prompt to send to the builder agent")):
     """Streams the agent's thoughts, tool calls, and final response tokens via Server-Sent Events (SSE)."""

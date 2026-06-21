@@ -5,7 +5,8 @@ import {
   FolderOpen,
   FileCode,
   RotateCw,
-  Cpu
+  Cpu,
+  Trash2
 } from "lucide-react";
 
 function DashboardContent() {
@@ -159,6 +160,30 @@ function DashboardContent() {
     });
   };
 
+  const handleDeleteFile = async (e: React.MouseEvent, filename: string) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
+    
+    try {
+      const res = await fetch(`/api/files/delete?filename=${encodeURIComponent(filename)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.status === "deleted") {
+        if (activeCodeFile === filename) {
+          setActiveCodeFile(null);
+          setActiveCodeContent("");
+        }
+        refreshFilesList();
+      } else {
+        alert(`Error deleting file: ${data.detail || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("Error deleting file:", err);
+      alert("Failed to delete file.");
+    }
+  };
+
   const renderFormattedText = (text: string) => {
     if (!text) return "";
     const parts = text.split(/(```[\s\S]*?```)/g);
@@ -228,21 +253,33 @@ function DashboardContent() {
               else if (file.endsWith(".js") || file.endsWith(".ts")) iconColor = "text-yellow-500";
 
               return (
-                <button
+                <div
                   key={file}
-                  onClick={() => {
-                    setActiveCodeFile(file);
-                    setRightPaneTab("code");
-                  }}
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded text-left transition-colors w-full ${
+                  className={`group flex items-center justify-between rounded transition-colors w-full ${
                     isActive 
                       ? "bg-[#1c1c1c] text-white" 
                       : "text-[#a0a0a0] hover:text-white hover:bg-[#121213]"
                   }`}
                 >
-                  <FileCode size={12} className={`${iconColor} shrink-0`} />
-                  <span className="font-mono text-xs truncate">{file}</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      setActiveCodeFile(file);
+                      setRightPaneTab("code");
+                    }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-left w-full overflow-hidden flex-1"
+                  >
+                    <FileCode size={12} className={`${iconColor} shrink-0`} />
+                    <span className="font-mono text-xs truncate">{file}</span>
+                  </button>
+                  
+                  <button
+                    onClick={(e) => handleDeleteFile(e, file)}
+                    title={`Delete ${file}`}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 mr-1 text-[#666] hover:text-red-500 rounded hover:bg-[#222]"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
               );
             })
           )}
