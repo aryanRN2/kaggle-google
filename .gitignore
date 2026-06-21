@@ -1,0 +1,23 @@
+# python cache
+__pycache__/
+*.pyc
+
+# environment variables (sensitive keys)
+.env
+.env.*
+
+# local conversation history & databases
+conversation_history/
+conversation_id.txt
+
+# generated sandbox files
+sandbox/
+
+# zip archives and build tools
+*.zip
+.DS_Store
+
+# next.js project folder patterns (already handled inside romer-dashboard/.gitignore, but let's be safe)
+romer-dashboard/node_modules/
+romer-dashboard/.next/
+romer-dashboard/out/
